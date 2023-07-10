@@ -61,13 +61,22 @@
         app:layout_constraintTop_toBottomOf="@id/editTextKey"
         app:layout_constraintStart_toEndOf="@id/buttonRemove"/>
 
+    <Button
+        android:id="@+id/buttonUpdate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="update"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/buttonClear"
+        app:layout_constraintStart_toEndOf="@id/buttonRemove"/>
+
     <EditText
         android:id="@+id/editTextGetValue"
         android:layout_width="150dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="50dp"
         android:hint="enter key"
-        app:layout_constraintTop_toBottomOf="@id/buttonSave"
+        app:layout_constraintTop_toBottomOf="@id/buttonUpdate"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toStartOf="@id/editTextValue"/>
 

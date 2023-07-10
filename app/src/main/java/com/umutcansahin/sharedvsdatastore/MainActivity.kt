@@ -1,15 +1,26 @@
 package com.umutcansahin.sharedvsdatastore
 
 import android.content.Context
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
 import com.umutcansahin.sharedvsdatastore.databinding.ActivityMainBinding
-import java.security.Key
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+
 
 const val SHARED_NAME = "myPref"
 const val NAME = "name"
 const val AGE = "age"
 const val IS_ADMIN = "isAdmin"
+
+// At the top level of your kotlin file:
+val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "myDataStore")
 
 class MainActivity : AppCompatActivity() {
 
@@ -65,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         }
         binding.buttonGetData.setOnClickListener {
             val key = binding.editTextGetValue.text.toString()
-            val getValue = sharedPreferences.getString(key,"empty")
+            val getValue = sharedPreferences.getString(key, "empty")
             binding.textView.text = getValue
         }
         binding.buttonRemove.setOnClickListener {
@@ -78,4 +89,80 @@ class MainActivity : AppCompatActivity() {
             editor.apply()
         }
     }
+
+    /** SAVE DATA WİTH SHARED DATA STORE*/
+    private suspend fun saveDataWithSharedDataStore(key: String, value: String) {
+        val dataStoreKey = stringPreferencesKey(key)
+        dataStore.edit { preferences ->
+            preferences[dataStoreKey] = value
+        }
+    }
+
+    /**READ DATA FROM SHARED DATA STORE*/
+    private suspend fun readDataFromSharedDataStore(key: String): String {
+        val dataStoreKey = stringPreferencesKey(key)
+        val result = dataStore.data.first()
+        return result[dataStoreKey] ?: "empty"
+    }
+
+    /**REMOVE DATA FROM SHARED DATA STORE*/
+    private suspend fun removeDataFromSharedDataStore(key: String) {
+        val dataStoreKey = stringPreferencesKey(key)
+        dataStore.edit { preferences ->
+            preferences.remove(dataStoreKey)
+        }
+    }
+
+    /** CLEAR ALL DATA FROM SHARED DATA STORE*/
+    private suspend fun clearAllDataFromSharedDataStore() {
+        dataStore.edit { preferences ->
+            preferences.clear()
+        }
+    }
+
+    /**UPDATE DATA FROM SHARED DATA STORE*/
+    private suspend fun updateDataFromSharedDataStore(key: String, value: String) {
+        val dataStoreKey = stringPreferencesKey(key)
+        dataStore.edit { preferences ->
+            preferences[dataStoreKey] = value
+        }
+    }
+
+    private fun trySharedDataStore() {
+
+        binding.buttonSave.setOnClickListener {
+            lifecycleScope.launch {
+                saveDataWithSharedDataStore(
+                    binding.editTextKey.text.toString(),
+                    binding.editTextValue.text.toString()
+                )
+
+            }
+        }
+        binding.buttonGetData.setOnClickListener {
+            lifecycleScope.launch {
+                val value = readDataFromSharedDataStore(binding.editTextGetValue.text.toString())
+                binding.textView.text = value
+            }
+        }
+        binding.buttonRemove.setOnClickListener {
+            lifecycleScope.launch {
+                removeDataFromSharedDataStore(binding.editTextGetValue.text.toString())
+            }
+        }
+        binding.buttonClear.setOnClickListener {
+            lifecycleScope.launch {
+                clearAllDataFromSharedDataStore()
+            }
+        }
+        binding.buttonUpdate.setOnClickListener {
+            lifecycleScope.launch {
+                updateDataFromSharedDataStore(
+                    binding.editTextKey.text.toString(),
+                    binding.editTextValue.text.toString()
+                )
+            }
+        }
+    }
 }
+
