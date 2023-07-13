@@ -2,16 +2,22 @@ package com.umutcansahin.sharedvsdatastore
 
 import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.SharedPreferencesMigration
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.lifecycleScope
 import com.umutcansahin.sharedvsdatastore.databinding.ActivityMainBinding
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import java.io.IOException
 
 
 const val SHARED_NAME = "myPref"
@@ -141,7 +147,8 @@ class MainActivity : AppCompatActivity() {
         }
         binding.buttonGetData.setOnClickListener {
             lifecycleScope.launch {
-                val value = readDataFromSharedDataStore(binding.editTextGetValue.text.toString())
+                val value =
+                    readDataFromSharedDataStoreWithTryCatch(binding.editTextGetValue.text.toString())
                 binding.textView.text = value
             }
         }
@@ -164,5 +171,40 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+
+    /**READ DATA FROM SHARED DATA STORE WITH TRY-CATCH*/
+    private suspend fun readDataFromSharedDataStoreWithTryCatch(key: String): String {
+        val dataStoreKey = stringPreferencesKey(key)
+        val result = dataStore.data.catch { exception ->
+            if (exception is IOException) {
+                Log.e("TAG", "Error reading preferences.", exception)
+                exception.toString()
+            } else {
+                exception.toString()
+            }
+        }.map { preferences ->
+            preferences[dataStoreKey]
+        }
+        return result.first() ?: "empty"
+    }
+
+    /**READ DATA FROM SHARED DATA STORE WITH TRY-CATCH*/
+    private suspend fun readDataFromSharedDataStoreWithTryCatch2(key: String): String {
+        return try {
+            val dataStoreKey = stringPreferencesKey(key)
+            val result = dataStore.data.first()
+            result[dataStoreKey] ?: "empty"
+        } catch (e: Exception) {
+            "handle error"
+        }
+    }
+
+    /** SharedPreference dan dataStore gecis */
+    private val Context.dataStore by preferencesDataStore(
+        name = "USER_PREFERENCES_NAME",
+        produceMigrations = { context ->
+            listOf(SharedPreferencesMigration(context, "USER_PREFERENCES_NAME"))
+        }
+    )
 }
 
